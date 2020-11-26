@@ -1,9 +1,12 @@
-﻿# CMakeList.txt : Top-level CMake project file, do global configuration
-# and include sub-projects here.
-#
+# CMakeList.txt : CMake project for Networking, include source and define
+# project specific logic here.
+
+# cmake version
 cmake_minimum_required (VERSION 3.8)
 
-project ("Networking")
+set(EXEC networking)
+set(CMAKE_CXX_STANDARD 17)
 
-# Include sub-projects.
-add_subdirectory ("Networking")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+
+add_subdirectory(Networking)

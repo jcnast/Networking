@@ -3,10 +3,25 @@
 
 #include "Networking.h"
 
+#ifdef CLIENT
+#include "Client.h"
+#endif
+
+#ifdef SERVER
+#include "Server.h"
+#endif
+
 using namespace std;
 
 int main()
 {
-	cout << "Hello CMake." << endl;
+#ifdef CLIENT
+	ExecuteClientConnection();
+#endif
+
+#ifdef SERVER
+	ExecuteServerConnection();
+#endif
+
 	return 0;
 }
