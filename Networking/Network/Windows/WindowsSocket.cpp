@@ -73,7 +73,7 @@ std::unique_ptr<ISocket> WindowsSocket::Accept()
     SOCKET acceptedSocket = accept(_socket, (sockaddr*)&acceptedAddr, &acceptedAddrLen);
     if (acceptedSocket == INVALID_SOCKET)
     {
-        Abort();
+		return nullptr;
     }
 
     return std::make_unique<WindowsSocket>(acceptedSocket, acceptedAddr);
@@ -83,9 +83,9 @@ int WindowsSocket::Send(std::vector<std::byte> bytes)
 {
     int sent = send(_socket, (char*)&(bytes[0]), bytes.size(), 0);
 
-    if (sent == SOCKET_ERROR)
+	if (sent == SOCKET_ERROR)
     {
-        Abort();
+		std::cout << "Failed with error: " << WSAWrapper_Static::GetLastError() << std::endl;
     }
 
     return sent;
@@ -102,7 +102,7 @@ int WindowsSocket::SendTo(WindowsSocket *socket, std::vector<std::byte> bytes)
 
     if (sent == SOCKET_ERROR)
     {
-        Abort();
+		std::cout << "Failed with error: " << WSAWrapper_Static::GetLastError() << std::endl;
     }
 
     return sent;
@@ -112,11 +112,10 @@ int WindowsSocket::Receive(std::vector<std::byte> &bytes)
 {
     int received = recv(_socket, (char*)&(bytes[0]), bytes.size(), 0);
 
-	// we do not need to abort if nothing is received
-    //if (received == SOCKET_ERROR)
-    //{
-    //    Abort();
-    //}
+	if (received == SOCKET_ERROR)
+    {
+		std::cout << "Failed with error: " << WSAWrapper_Static::GetLastError() << std::endl;
+    }
 
     return received;
 }
@@ -133,7 +132,7 @@ int WindowsSocket::ReceiveFrom(WindowsSocket *socket, std::vector<std::byte> &by
 
     if (received == SOCKET_ERROR)
     {
-        Abort();
+		std::cout << "Failed with error: " << WSAWrapper_Static::GetLastError() << std::endl;
     }
 
     return received;

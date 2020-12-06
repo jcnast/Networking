@@ -11,13 +11,17 @@ class Socket : public ISocket
 {
     public:
         Socket();
+		Socket(std::shared_ptr<ISocket> socket);
         ~Socket();
+
+		bool Active();
 
         bool Bind(Endpoint endpoint) override;
         bool Connect(Endpoint endpoint) override;
 
         void Listen(int count) override;
         std::unique_ptr<ISocket> Accept() override;
+		Socket AcceptSocket();
 
         int Send(std::vector<std::byte> bytes) override;
         int SendTo(ISocket *socket, std::vector<std::byte> bytes) override;

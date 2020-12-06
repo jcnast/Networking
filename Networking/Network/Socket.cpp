@@ -15,9 +15,18 @@ Socket::Socket()
 #endif
 }
 
+Socket::Socket(std::shared_ptr<ISocket> socket)
+	: _socket(socket)
+{}
+
 Socket::~Socket()
 {
     Disconnect();
+}
+
+bool Socket::Active()
+{
+	return _connected;
 }
 
 bool Socket::Bind(Endpoint endpoint)
@@ -42,6 +51,11 @@ void Socket::Listen(int count)
 std::unique_ptr<ISocket> Socket::Accept()
 {
     return _socket->Accept();
+}
+
+Socket Socket::AcceptSocket()
+{
+	return Socket(move(Accept()));
 }
 
 int Socket::Send(std::vector<std::byte> bytes)

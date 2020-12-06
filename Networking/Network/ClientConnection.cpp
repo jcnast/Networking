@@ -1,5 +1,8 @@
 #include "ClientConnection.h"
 
+// testing
+#include <iostream>
+
 std::unique_ptr<IMessage> ClientConnection::GetMessage()
 {
     std::unique_ptr<IMessage> oldestMessage = nullptr;
@@ -108,7 +111,13 @@ void ClientConnection::Run()
 
         if (nextMessage.get() != nullptr)
         {
-            _socket.Send(nextMessage->AsBytes());
+			std::shared_ptr<std::string> message = dynamic_cast<StringMessage*>(nextMessage.get())->AsType();
+			std::cout << "sending message: " << *message << std::endl;
+
+			if (_socket.Send(nextMessage->AsBytes()) == -1)
+			{
+				std::cout << "failed to send message" << std::endl;
+			}
         }
 
         int byteReceived = _socket.Receive(messageReceived);
@@ -120,6 +129,8 @@ void ClientConnection::Run()
 
             std::unique_ptr<StringByteParser> stringParser = std::make_unique<StringByteParser>();
             std::unique_ptr<StringMessage> message = std::make_unique<StringMessage>(move(stringParser), minimizedMessage);
+
+			std::cout << "received message: " << message->AsType() << std::endl;
 
             _receivedMutex.lock();
             {

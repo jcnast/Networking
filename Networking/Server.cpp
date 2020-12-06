@@ -9,8 +9,13 @@
 
 #include "Server.h"
 
+#include "Logging/Logger.h"
+#include "Logging/ConsoleLogger.h"
+
 void ExecuteServerConnection()
 {
+	Logging::Logger::Instance()->AddImplementation(std::make_shared<Logging::ConsoleLogger>());
+
     // may not work
     Endpoint endpoint = Endpoint("127.0.0.1", "3333", Endpoint::Protocol::TCP);
     Socket socket;
@@ -26,7 +31,7 @@ void ExecuteServerConnection()
         {
             std::shared_ptr<std::string> message = dynamic_cast<StringMessage*>(clientMessage.get())->AsType();
 
-            std::cout << "Message from client: " << message->c_str() << std::endl;
+			Logging::Logger::Instance()->Log("Server", "Message from client: " + *message);
         }
     }
 }
