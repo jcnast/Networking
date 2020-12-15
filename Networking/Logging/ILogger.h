@@ -4,7 +4,7 @@
 
 namespace Logging
 {
-	enum LogType
+	enum LogTypeEnum
 	{
 		Info,
 		Warning,

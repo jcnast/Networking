@@ -16,8 +16,11 @@ class Socket : public ISocket
 
 		bool Active();
 
-        bool Bind(Endpoint endpoint) override;
-        bool Connect(Endpoint endpoint) override;
+		bool GetBlocking() override;
+		void SetBlocking(bool blocking) override;
+
+        bool Bind(Endpoint endpoint, bool blocking) override;
+        bool Connect(Endpoint endpoint, bool blocking) override;
 
         void Listen(int count) override;
         std::unique_ptr<ISocket> Accept() override;

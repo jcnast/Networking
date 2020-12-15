@@ -50,8 +50,8 @@ class ServerConnection : public IConnection, public IReceiver, public ISender
 
 		void SetMaxClients(int maxClients);
 
-        void Connect(Socket socket, Endpoint endpoint) override;
-        void Connect(Endpoint endpoint) override;
+        void Connect(Socket socket, Endpoint endpoint, bool blocking) override;
+        void Connect(Endpoint endpoint, bool blocking) override;
 
         std::vector<std::unique_ptr<IMessage>> Disconnect(bool flush = false) override;
 

@@ -1,7 +1,6 @@
 #include "ServerConnection.h"
 
-// testing
-#include <iostream>
+#include "Logging/Logger.h"
 
 ServerConnection::~ServerConnection()
 {
@@ -41,7 +40,7 @@ void ServerConnection::SetMaxClients(int maxClients)
 	_clientHandlers = std::make_unique<ClientHandler[]>(_maxClients);
 }
 
-void ServerConnection::Connect(Socket socket, Endpoint endpoint)
+void ServerConnection::Connect(Socket socket, Endpoint endpoint, bool blocking)
 {
     if (_threadRunning)
     {
@@ -49,17 +48,17 @@ void ServerConnection::Connect(Socket socket, Endpoint endpoint)
     }
 
     _socket = socket;
-    Connect(endpoint);
+    Connect(endpoint, blocking);
 }
 
-void ServerConnection::Connect(Endpoint endpoint)
+void ServerConnection::Connect(Endpoint endpoint, bool blocking)
 {
     if (_threadRunning)
     {
         Disconnect();
     }
 
-    _socket.Bind(endpoint);
+    _socket.Bind(endpoint, blocking);
 	_socket.Listen(10);
 
 	_threadShouldStop = false;
@@ -115,22 +114,23 @@ std::vector<std::unique_ptr<IMessage>> ServerConnection::Disconnect(bool flush)
 
 void ServerConnection::Run()
 {
-	std::cout << "running server connection" << std::endl;
+	Logging::Log("ServerConnection", "Running Server Connection");
 	Socket clientSocket;
 
     while (!_threadShouldStop)
     {
-		if (clientSocket.Active())
+		if (!clientSocket.Active())
 		{
 			clientSocket = _socket.AcceptSocket();
-			std::cout << "client accepted" << std::endl;
-		}
-		if (clientSocket.Active())
-		{
-			std::cout << "no client accepted" << std::endl;
 		}
 		else
 		{
+			Logging::Log("ServerConnection", "Client Full, Not Accepting Any New Client");
+		}
+
+		if (clientSocket.Active())
+		{
+			Logging::Log("ServerConnection", "Handling Accepted Client");
 			HandleClient(clientSocket);
 		}
 
@@ -149,26 +149,22 @@ void ServerConnection::Run()
 		if (nextMessage.get() != nullptr)
 		{
 			std::shared_ptr<std::string> message = dynamic_cast<StringMessage*>(nextMessage.get())->AsType();
-			std::cout << "sending message: " << *message << std::endl;
+			Logging::Log("ServerConnection", "Sending Message: " + *message);
 
 			for (int i = 0; i < _maxClients; i++)
 			{
 				_clientHandlers[i].SendMessage(nextMessage);
 			}
 		}
-		else
-		{
-			std::cout << "no message to send" << std::endl;
-		}
 
 		for (int i = 0; i < _maxClients; i++)
 		{
 			std::unique_ptr<IMessage> clientMessage = _clientHandlers[i].GetMessage();
-			if (clientMessage.get() == nullptr)
+			if (clientMessage.get() != nullptr)
 			{
 				_receivedMutex.lock();
 				{
-					_receivedMessages.push(clientMessage);
+					_receivedMessages.push(move(clientMessage));
 				}
 				_receivedMutex.unlock();
 
@@ -188,8 +184,10 @@ void ServerConnection::HandleClient(Socket clientSocket)
 		{
 			if (!_clientHandlers[i].Active())
 			{
+				clientSocket.SetBlocking(_socket.GetBlocking());
 				_clientHandlers[i].SetSocket(clientSocket);
 				_clientHandlers[i].Connect();
+				break;
 			}
 		}
 	}
@@ -253,7 +251,7 @@ void ServerConnection::ClientHandler::SendMessage(std::shared_ptr<IMessage> mess
 void ServerConnection::ClientHandler::Connect()
 {
 	_threadShouldStop = false;
-	_thread = std::thread(&ServerConnection::Run, this);
+	_thread = std::thread(&ServerConnection::ClientHandler::Run, this);
 	_threadRunning = true;
 }
 
@@ -268,7 +266,7 @@ void ServerConnection::ClientHandler::Disconnect()
 
 void ServerConnection::ClientHandler::Run()
 {
-	std::cout << "running client handler" << std::endl;
+	Logging::Log("ServerConnection::ClientHandler", "Running Client Handler");
 	std::vector<std::byte> messageReceived(1024);
 	messageReceived.reserve(1024);
 
@@ -278,7 +276,7 @@ void ServerConnection::ClientHandler::Run()
 
 		if (byteReceived > 0)
 		{
-			std::cout << "bytes received: " << byteReceived << std::endl;
+			Logging::Log("ServerConnection::ClientHandler", "Bytes Received: " + byteReceived);
 
 			std::vector<std::byte> minimizedMessage = messageReceived;
 			minimizedMessage.resize(byteReceived);
@@ -286,17 +284,13 @@ void ServerConnection::ClientHandler::Run()
 			std::unique_ptr<StringByteParser> stringParser = std::make_unique<StringByteParser>();
 			std::unique_ptr<StringMessage> message = std::make_unique<StringMessage>(move(stringParser), minimizedMessage);
 
-			std::cout << "received message: " << message->AsType() << std::endl;
+			Logging::Log("ServerConnection::ClientHandler", "Received Message: " + *(message->AsType()));
 
 			_receivedMutex.lock();
 			{
 				_receivedMessages.push(move(message));
 			}
 			_receivedMutex.unlock();
-		}
-		else
-		{
-			std::cout << "no message received" << std::endl;
 		}
 
 		std::shared_ptr<IMessage> nextMessage = nullptr;
@@ -314,16 +308,12 @@ void ServerConnection::ClientHandler::Run()
 		if (nextMessage.get() != nullptr)
 		{
 			std::shared_ptr<std::string> message = dynamic_cast<StringMessage*>(nextMessage.get())->AsType();
-			std::cout << "sending message: " << *message << std::endl;
+			Logging::Log("ServerConnection::ClientHandler", "Sending Message: " + *message);
 
 			if (_socket.Send(nextMessage->AsBytes()) == -1)
 			{
-				std::cout << "failed to send message" << std::endl;
+				Logging::Log("ServerConnection::ClientHandler", "Failed To Send Message");
 			}
-		}
-		else
-		{
-			std::cout << "no message to send" << std::endl;
 		}
 	}
 }

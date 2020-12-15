@@ -14,8 +14,8 @@ class ClientConnection : public IConnection, public IReceiver, public ISender
         std::unique_ptr<IMessage> GetMessage() override;
         void SendMessage(std::unique_ptr<IMessage> message) override;
 
-        void Connect(Socket socket, Endpoint endpoint) override;
-        void Connect(Endpoint endpoint) override;
+        void Connect(Socket socket, Endpoint endpoint, bool blocking) override;
+        void Connect(Endpoint endpoint, bool blocking) override;
 
         std::vector<std::unique_ptr<IMessage>> Disconnect(bool flush = false) override;
 

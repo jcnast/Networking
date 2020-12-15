@@ -29,16 +29,26 @@ bool Socket::Active()
 	return _connected;
 }
 
-bool Socket::Bind(Endpoint endpoint)
+bool Socket::GetBlocking()
 {
-    _bound = _socket->Bind(endpoint);
+	return _socket->GetBlocking();
+}
+
+void Socket::SetBlocking(bool blocking)
+{
+	_socket->SetBlocking(blocking);
+}
+
+bool Socket::Bind(Endpoint endpoint, bool blocking)
+{
+    _bound = _socket->Bind(endpoint, blocking);
 
     return _bound;
 }
 
-bool Socket::Connect(Endpoint endpoint)
+bool Socket::Connect(Endpoint endpoint, bool blocking)
 {
-    _connected = _socket->Connect(endpoint);
+    _connected = _socket->Connect(endpoint, blocking);
 
     return _connected;
 }

@@ -20,8 +20,8 @@ class ISender
 class IConnection
 {
     public:
-        virtual void Connect(Socket socket, Endpoint endpoint) = 0;
-        virtual void Connect(Endpoint endpoint) = 0;
+        virtual void Connect(Socket socket, Endpoint endpoint, bool blocking) = 0;
+        virtual void Connect(Endpoint endpoint, bool blocking) = 0;
 
         virtual std::vector<std::unique_ptr<IMessage>> Disconnect(bool flush = false) = 0;
 };

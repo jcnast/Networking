@@ -14,14 +14,22 @@
 
 void ExecuteServerConnection()
 {
-	Logging::Logger::Instance()->AddImplementation(std::make_shared<Logging::ConsoleLogger>());
+	Logging::AddImplementation(std::make_shared<Logging::ConsoleLogger>());
+
+	Logging::Log("Server", "Executing server connection");
 
     // may not work
     Endpoint endpoint = Endpoint("127.0.0.1", "3333", Endpoint::Protocol::TCP);
     Socket socket;
 
+	Logging::Log("Server", "Socket and endpoint created");
+
     ServerConnection server;
-    server.Connect(socket, endpoint);
+	server.SetMaxClients(10);
+	// server shouldn't _need_ to be blocking, if it does - may be that we need to use the select() function
+    server.Connect(socket, endpoint, true);
+
+	Logging::Log("Server", "Server is connected");
 
     while(true)
     {
@@ -31,7 +39,7 @@ void ExecuteServerConnection()
         {
             std::shared_ptr<std::string> message = dynamic_cast<StringMessage*>(clientMessage.get())->AsType();
 
-			Logging::Logger::Instance()->Log("Server", "Message from client: " + *message);
+			Logging::Log("Server", "Message from client: " + *message);
         }
     }
 }

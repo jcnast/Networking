@@ -1,7 +1,6 @@
 #include "ClientConnection.h"
 
-// testing
-#include <iostream>
+#include "Logging/Logger.h"
 
 std::unique_ptr<IMessage> ClientConnection::GetMessage()
 {
@@ -30,7 +29,7 @@ void ClientConnection::SendMessage(std::unique_ptr<IMessage> message)
     _sendMutex.unlock();
 }
 
-void ClientConnection::Connect(Socket socket, Endpoint endpoint)
+void ClientConnection::Connect(Socket socket, Endpoint endpoint, bool blocking)
 {
     if (_threadRunning)
     {
@@ -38,17 +37,17 @@ void ClientConnection::Connect(Socket socket, Endpoint endpoint)
     }
 
     _socket = socket;
-    Connect(endpoint);
+    Connect(endpoint, blocking);
 }
 
-void ClientConnection::Connect(Endpoint endpoint)
+void ClientConnection::Connect(Endpoint endpoint, bool blocking)
 {
     if (_threadRunning)
     {
         Disconnect();
     }
 
-    _socket.Connect(endpoint);
+    _socket.Connect(endpoint, blocking);
 
     _thread = std::thread(&ClientConnection::Run, this);
 }
@@ -92,6 +91,7 @@ std::vector<std::unique_ptr<IMessage>> ClientConnection::Disconnect(bool flush)
 
 void ClientConnection::Run()
 {
+	Logging::Log("ClientConnection", "Running Server Connection");
     std::vector<std::byte> messageReceived(1024);
     messageReceived.reserve(1024);
 
@@ -112,11 +112,11 @@ void ClientConnection::Run()
         if (nextMessage.get() != nullptr)
         {
 			std::shared_ptr<std::string> message = dynamic_cast<StringMessage*>(nextMessage.get())->AsType();
-			std::cout << "sending message: " << *message << std::endl;
+			Logging::Log("ClientConnection", "Sending Message: " + *message);
 
 			if (_socket.Send(nextMessage->AsBytes()) == -1)
 			{
-				std::cout << "failed to send message" << std::endl;
+				Logging::Log("ClientConnection", "Failed To Send Message");
 			}
         }
 
@@ -130,7 +130,7 @@ void ClientConnection::Run()
             std::unique_ptr<StringByteParser> stringParser = std::make_unique<StringByteParser>();
             std::unique_ptr<StringMessage> message = std::make_unique<StringMessage>(move(stringParser), minimizedMessage);
 
-			std::cout << "received message: " << message->AsType() << std::endl;
+			Logging::Log("ClientConnection", "Received Message: " + *(message->AsType()));
 
             _receivedMutex.lock();
             {

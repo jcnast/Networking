@@ -18,8 +18,11 @@ class WindowsSocket : public ISocket
 
         WindowsSocket& operator=(const WindowsSocket &other);
 
-        bool Bind(Endpoint endpoint) override;
-        bool Connect(Endpoint endpoint) override;
+		bool GetBlocking() override;
+		void SetBlocking(bool blocking) override;
+
+        bool Bind(Endpoint endpoint, bool blocking) override;
+        bool Connect(Endpoint endpoint, bool blocking) override;
 
         void Listen(int count) override;
         std::unique_ptr<ISocket> Accept() override;
@@ -39,6 +42,7 @@ class WindowsSocket : public ISocket
         SOCKET _socket = INVALID_SOCKET;
         sockaddr_in _socketAddr;
         addrinfo *_addrinfo = NULL;
+		bool _blocking = false;
 
         Endpoint _currentEndpoint;
 

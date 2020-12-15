@@ -1,6 +1,8 @@
 ﻿# CMakeList.txt : CMake project for Networking, include source and define
 # project specific logic here.
 
+add_subdirectory(Logging)
+
 add_library(Networking_Lib #
 Client.cpp #
 Server.cpp #
@@ -21,10 +23,8 @@ add_definitions(-D__WIN32__)
 
 add_executable(Client Networking.cpp)
 set_target_properties(Client PROPERTIES COMPILE_DEFINITIONS CLIENT)
-target_link_libraries(Client Networking_Lib)
-target_link_libraries(Client Logging_Lib)
+target_link_libraries(Client Networking_Lib Logging_Lib)
 
 add_executable(Server Networking.cpp)
 set_target_properties(Server PROPERTIES COMPILE_DEFINITIONS SERVER)
-target_link_libraries(Server Networking_Lib)
-target_link_libraries(Client Logging_Lib)
+target_link_libraries(Server Networking_Lib Logging_Lib)

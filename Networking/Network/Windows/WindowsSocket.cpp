@@ -34,7 +34,25 @@ WindowsSocket& WindowsSocket::operator=(const WindowsSocket &other)
     return *this;
 }
 
-bool WindowsSocket::Bind(Endpoint endpoint)
+bool WindowsSocket::GetBlocking()
+{
+	return _blocking;
+}
+
+void WindowsSocket::SetBlocking(bool blocking)
+{
+	u_long blockingVal = blocking ? 0 : 1;
+
+	if (ioctlsocket(_socket, FIONBIO, &blockingVal) != NO_ERROR)
+	{
+		Abort();
+		return;
+	}
+
+	_blocking = blocking;
+}
+
+bool WindowsSocket::Bind(Endpoint endpoint, bool blocking)
 {
     CreateSocket(endpoint);
     if (bind(_socket, _addrinfo->ai_addr, (int)_addrinfo->ai_addrlen) == SOCKET_ERROR)
@@ -43,10 +61,12 @@ bool WindowsSocket::Bind(Endpoint endpoint)
 		return false;
     }
 
+	SetBlocking(blocking);
+
 	return true;
 }
 
-bool WindowsSocket::Connect(Endpoint endpoint)
+bool WindowsSocket::Connect(Endpoint endpoint, bool blocking)
 {
    CreateSocket(endpoint);
     if (connect(_socket, _addrinfo->ai_addr, (int)_addrinfo->ai_addrlen) == SOCKET_ERROR)
@@ -54,6 +74,8 @@ bool WindowsSocket::Connect(Endpoint endpoint)
         Abort();
 		return false;
     }
+
+	SetBlocking(blocking);
 
 	return true;
 }
@@ -110,14 +132,21 @@ int WindowsSocket::SendTo(WindowsSocket *socket, std::vector<std::byte> bytes)
 
 int WindowsSocket::Receive(std::vector<std::byte> &bytes)
 {
-    int received = recv(_socket, (char*)&(bytes[0]), bytes.size(), 0);
+	try
+	{
+		int received = recv(_socket, (char*)&(bytes[0]), bytes.size(), 0);
 
-	if (received == SOCKET_ERROR)
-    {
-		std::cout << "Failed with error: " << WSAWrapper_Static::GetLastError() << std::endl;
-    }
+		if (received == SOCKET_ERROR)
+		{
+			std::cout << "Failed with error: " << WSAWrapper_Static::GetLastError() << std::endl;
+		}
 
-    return received;
+		return received;
+	}
+	catch (std::exception& e)
+	{
+		std::cout << e.what() << std::endl;
+	}
 }
 
 int WindowsSocket::ReceiveFrom(ISocket *socket, std::vector<std::byte> &bytes)

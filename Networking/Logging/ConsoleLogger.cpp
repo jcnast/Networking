@@ -21,8 +21,8 @@ namespace Logging
 		std::cout << "E: [" << tag << "] " << message << std::endl;
 	}
 
-	void ConsoleLogger::ThrowException(std::string tag, std::string message) override;
+	void ConsoleLogger::ThrowException(std::string tag, std::string message)
 	{
-		throw std::exception("[" + tag + "] : " + message);
+		throw std::runtime_error("[" + tag + "] : " + message);
 	}
 }

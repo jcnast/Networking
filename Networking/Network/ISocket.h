@@ -11,8 +11,11 @@ class ISocket
     public:
         virtual ~ISocket(){}
 
-        virtual bool Bind(Endpoint endpoint) = 0;
-        virtual bool Connect(Endpoint endpoint) = 0;
+		virtual bool GetBlocking() = 0;
+		virtual void SetBlocking(bool blocking) = 0;
+
+        virtual bool Bind(Endpoint endpoint, bool blocking) = 0;
+        virtual bool Connect(Endpoint endpoint, bool blocking) = 0;
 
         virtual void Listen(int count) = 0;
         virtual std::unique_ptr<ISocket> Accept() = 0;

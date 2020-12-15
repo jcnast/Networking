@@ -2,36 +2,27 @@
 
 namespace Logging
 {
-	Logger* Logger::Instance()
-	{
-		if (_instance.get() == nullptr)
-		{
-			_instance = std::make_unique<Logger>();
-		}
-
-		return _instance.get();
-	}
-
-	void Logger::LogType(LogType type, std::string tag, std::string message)
+	// free functions
+	void LogType(Logging::LogTypeEnum type, std::string tag, std::string message)
 	{
 		switch (type)
 		{
-			case LogType::Info:
+			case LogTypeEnum::Info:
 			{
 				Log(tag, message);
 				break;
 			}
-			case LogType::Warning:
+			case LogTypeEnum::Warning:
 			{
 				LogWarning(tag, message);
 				break;
 			}
-			case LogType::Error:
+			case LogTypeEnum::Error:
 			{
 				LogError(tag, message);
 				break;
 			}
-			case LogType::Exception:
+			case LogTypeEnum::Exception:
 			{
 				ThrowException(tag, message);
 				break;
@@ -42,6 +33,27 @@ namespace Logging
 				break;
 			}
 		}
+	}
+
+	void Log(std::string tag, std::string message) { Logger::Instance()->Log(tag, message); }
+	void LogWarning(std::string tag, std::string message) { Logger::Instance()->LogWarning(tag, message); }
+	void LogError(std::string tag, std::string message) { Logger::Instance()->LogError(tag, message); }
+	void ThrowException(std::string tag, std::string message) { Logger::Instance()->ThrowException(tag, message); }
+
+	bool AddImplementation(std::shared_ptr<ILogger> implementation) { return Logger::Instance()->AddImplementation(implementation); }
+	void RemoveImplementation(std::shared_ptr<ILogger> implementation) { Logger::Instance()->RemoveImplementation(implementation); }
+
+	// member functinos
+	std::unique_ptr<Logger> Logger::_instance = nullptr;
+
+	Logger* Logger::Instance()
+	{
+		if (_instance.get() == nullptr)
+		{
+			_instance = std::make_unique<Logger>();
+		}
+
+		return _instance.get();
 	}
 
 	void Logger::Log(std::string tag, std::string message)
@@ -63,7 +75,7 @@ namespace Logging
 		{
 			for (int i = 0; i < _implementations.size(); i++)
 			{
-				_implementations[i]->ThrLogWarningowException(tag, message);
+				_implementations[i]->ThrowException(tag, message);
 			}
 		}
 		_implementationsMutex.unlock();
@@ -81,7 +93,7 @@ namespace Logging
 		_implementationsMutex.unlock();
 	}
 
-	void Logger::ThrowException(std::string tag, std::string message) override;
+	void Logger::ThrowException(std::string tag, std::string message)
 	{
 		_implementationsMutex.lock();
 		{
@@ -108,7 +120,7 @@ namespace Logging
 
 			if (add)
 			{
-				_implementations.push_back(implementations);
+				_implementations.push_back(implementation);
 			}
 		}
 		_implementationsMutex.unlock();
@@ -124,7 +136,7 @@ namespace Logging
 			{
 				if (_implementations[i] == implementation)
 				{
-					_implementations.erase(i);
+					_implementations.erase(_implementations.begin() + i);
 					return;
 				}
 			}
