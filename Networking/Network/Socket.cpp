@@ -6,6 +6,8 @@
 # include "Linux/LinuxSocket.h"
 #endif
 
+#include "Logging/Logger.h"
+
 Socket::Socket()
 {
 #ifdef __WIN32__
@@ -17,11 +19,12 @@ Socket::Socket()
 
 Socket::Socket(std::shared_ptr<ISocket> socket)
 	: _socket(socket)
+	, _connected(socket.get() != nullptr)
 {}
 
 Socket::~Socket()
 {
-    Disconnect();
+    // must be manually disconnected to avoid error when passing around copies
 }
 
 bool Socket::Active()
@@ -55,11 +58,21 @@ bool Socket::Connect(Endpoint endpoint, bool blocking)
 
 void Socket::Listen(int count)
 {
+	if (!_bound)
+	{
+		Logging::LogError("Socket", "Not bound, can't listen");
+		return;
+	}
     _socket->Listen(count);
 }
 
 std::unique_ptr<ISocket> Socket::Accept()
 {
+	if (!_bound)
+	{
+		Logging::LogError("Socket", "Not connected, can't accept");
+		return nullptr;
+	}
     return _socket->Accept();
 }
 
@@ -70,21 +83,41 @@ Socket Socket::AcceptSocket()
 
 int Socket::Send(std::vector<std::byte> bytes)
 {
+	if (!_connected && !_bound)
+	{
+		Logging::LogError("Socket", "Not connected, can't send");
+		return -1;
+	}
     return _socket->Send(bytes);
 }
 
 int Socket::SendTo(ISocket *socket, std::vector<std::byte> bytes)
 {
+	if (!_connected && !_bound)
+	{
+		Logging::LogError("Socket", "Not connected, can't send to");
+		return -1;
+	}
     return _socket->SendTo(socket, bytes);
 }
 
 int Socket::Receive(std::vector<std::byte> &bytes)
 {
+	if (!_connected && !_bound)
+	{
+		Logging::LogError("Socket", "Not connected, can't receive");
+		return -1;
+	}
     return _socket->Receive(bytes);
 }
 
 int Socket::ReceiveFrom(ISocket *socket, std::vector<std::byte> &bytes)
 {
+	if (!_connected && !_bound)
+	{
+		Logging::LogError("Socket", "Not connected, can't receive from");
+		return -1;
+	}
     return _socket->ReceiveFrom(socket, bytes);
 }
 

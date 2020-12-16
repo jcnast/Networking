@@ -95,7 +95,7 @@ void ClientConnection::Run()
     std::vector<std::byte> messageReceived(1024);
     messageReceived.reserve(1024);
 
-    while (!_threadShouldStop)
+    while (!_threadShouldStop && _socket.Active())
     {
         std::unique_ptr<IMessage> nextMessage = nullptr;
         _sendMutex.lock();

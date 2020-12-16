@@ -1,7 +1,7 @@
 #ifdef __WIN32__
 #include "WindowsSocket.h"
 
-#include <iostream>
+#include "Logging/Logger.h"
 
 WindowsSocket::WindowsSocket()
 {
@@ -105,9 +105,10 @@ int WindowsSocket::Send(std::vector<std::byte> bytes)
 {
     int sent = send(_socket, (char*)&(bytes[0]), bytes.size(), 0);
 
+	// in production, this should be if-def'd out since it should never occur (ideally)
 	if (sent == SOCKET_ERROR)
     {
-		std::cout << "Failed with error: " << WSAWrapper_Static::GetLastError() << std::endl;
+		Logging::Log("WindowsSocket", "Failed with error: " + std::to_string(WSAWrapper_Static::GetLastError()));
     }
 
     return sent;
@@ -122,9 +123,10 @@ int WindowsSocket::SendTo(WindowsSocket *socket, std::vector<std::byte> bytes)
 {
     int sent = sendto(_socket, (char*)&(bytes[0]), bytes.size(), 0, (sockaddr*)&(socket->_socketAddr), (int)sizeof(socket->_socketAddr));
 
+	// in production, this should be if-def'd out since it should never occur (ideally)
     if (sent == SOCKET_ERROR)
     {
-		std::cout << "Failed with error: " << WSAWrapper_Static::GetLastError() << std::endl;
+		Logging::Log("WindowsSocket", "Failed with error: " + std::to_string(WSAWrapper_Static::GetLastError()));
     }
 
     return sent;
@@ -132,21 +134,15 @@ int WindowsSocket::SendTo(WindowsSocket *socket, std::vector<std::byte> bytes)
 
 int WindowsSocket::Receive(std::vector<std::byte> &bytes)
 {
-	try
-	{
-		int received = recv(_socket, (char*)&(bytes[0]), bytes.size(), 0);
+	int received = recv(_socket, (char*)&(bytes[0]), bytes.size(), 0);
 
-		if (received == SOCKET_ERROR)
-		{
-			std::cout << "Failed with error: " << WSAWrapper_Static::GetLastError() << std::endl;
-		}
-
-		return received;
-	}
-	catch (std::exception& e)
+	// in production, this should be if-def'd out since it should never occur (ideally)
+	if (received == SOCKET_ERROR && WSAWrapper_Static::GetLastError() != WSAEWOULDBLOCK)
 	{
-		std::cout << e.what() << std::endl;
+		Logging::Log("WindowsSocket", "Failed with error: " + std::to_string(WSAWrapper_Static::GetLastError()));
 	}
+
+	return received;
 }
 
 int WindowsSocket::ReceiveFrom(ISocket *socket, std::vector<std::byte> &bytes)
@@ -159,9 +155,10 @@ int WindowsSocket::ReceiveFrom(WindowsSocket *socket, std::vector<std::byte> &by
 	int socketAddrLen = sizeof(socket->_socketAddr);
     int received = recvfrom(_socket, (char*)&(bytes[0]), bytes.size(), 0, (sockaddr*)&(socket->_socketAddr), &socketAddrLen);
 
-    if (received == SOCKET_ERROR)
+	// in production, this should be if-def'd out since it should never occur (ideally)
+    if (received == SOCKET_ERROR && WSAWrapper_Static::GetLastError() != WSAEWOULDBLOCK)
     {
-		std::cout << "Failed with error: " << WSAWrapper_Static::GetLastError() << std::endl;
+		Logging::Log("WindowsSocket", "Failed with error: " + std::to_string(WSAWrapper_Static::GetLastError()));
     }
 
     return received;
@@ -235,7 +232,7 @@ void WindowsSocket::CreateSocket(Endpoint endpoint)
 
 void WindowsSocket::Abort()
 {
-    std::cout << "Failed with error: " << WSAWrapper_Static::GetLastError() << std::endl;
+	Logging::Log("WindowsSocket", "Failed with error: " + std::to_string(WSAWrapper_Static::GetLastError()));
     if (_addrinfo != NULL)
     {
         freeaddrinfo(_addrinfo);
@@ -254,7 +251,6 @@ WSAWrapper_Static::Constructor WSAWrapper_Static::_constructor = Constructor();
 
 WSAWrapper_Static::Constructor::Constructor()
 {
-	std::cout << "Creating the constructor" << std::endl;
     CreateWSA();
 }
 
@@ -267,7 +263,7 @@ void WSAWrapper_Static::VerifyCreated()
 {
     if (!_wsaActive)
     {
-        std::cout << "WSA Not Active!" << std::endl;
+		Logging::Log("WindowsSocket", "WSA Not Active!");
     }
 }
 
@@ -280,11 +276,11 @@ void WSAWrapper_Static::CreateWSA()
 
 	if (!_wsaActive)
 	{
-		std::cout << "Failed to create WSA with error: " << WSAWrapper_Static::GetLastError() << std::endl;
+		Logging::Log("WindowsSocket", "Failed to create WSA with error: " + std::to_string(WSAWrapper_Static::GetLastError()));
 	}
 	else
 	{
-		std::cout << "Created WSA" << std::endl;
+		Logging::Log("WindowsSocket", "Created WSA");
 	}
 }
 

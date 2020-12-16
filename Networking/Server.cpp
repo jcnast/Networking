@@ -27,7 +27,7 @@ void ExecuteServerConnection()
     ServerConnection server;
 	server.SetMaxClients(10);
 	// server shouldn't _need_ to be blocking, if it does - may be that we need to use the select() function
-    server.Connect(socket, endpoint, true);
+    server.Connect(socket, endpoint, false);
 
 	Logging::Log("Server", "Server is connected");
 

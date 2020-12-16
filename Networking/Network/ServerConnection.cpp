@@ -125,13 +125,14 @@ void ServerConnection::Run()
 		}
 		else
 		{
-			Logging::Log("ServerConnection", "Client Full, Not Accepting Any New Client");
+			Logging::Log("ServerConnection", "Client Set, Not Accepting Any New Client");
 		}
 
 		if (clientSocket.Active())
 		{
 			Logging::Log("ServerConnection", "Handling Accepted Client");
 			HandleClient(clientSocket);
+			clientSocket = Socket();
 		}
 
 		std::shared_ptr<IMessage> nextMessage = nullptr;
@@ -257,9 +258,12 @@ void ServerConnection::ClientHandler::Connect()
 
 void ServerConnection::ClientHandler::Disconnect()
 {
-	_threadShouldStop = true;
-	_thread.join();
-	_threadRunning = false;
+	if (_threadRunning)
+	{
+		_threadShouldStop = true;
+		_thread.join();
+		_threadRunning = false;
+	}
 
 	_socket.Disconnect();
 }
