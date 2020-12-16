@@ -43,7 +43,7 @@ void ExecuteClientConnection()
         {
             std::shared_ptr<std::string> message = dynamic_cast<StringMessage*>(serverMessage.get())->AsType();
 
-			Logging::Log("Client", "Message from client: " + *message);
+			Logging::Log("Client", "Message from server: " + *message);
         }
     }
 }
