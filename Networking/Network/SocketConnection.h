@@ -3,18 +3,18 @@
 #include <memory>
 
 #include "Socket.h"
-#include "Message.h"
+#include "Messages/Message.h"
 
 class IReceiver
 {
     public:
-        virtual std::unique_ptr<IMessage> GetMessage() = 0;
+        virtual std::unique_ptr<Message::IMessage> GetMessage() = 0;
 };
 
 class ISender
 {
     public:
-        virtual void SendMessage(std::unique_ptr<IMessage> message) = 0;
+        virtual void SendMessage(std::unique_ptr<Message::IMessage> message) = 0;
 };
 
 class IConnection
@@ -23,5 +23,5 @@ class IConnection
         virtual void Connect(Socket socket, Endpoint endpoint, bool blocking) = 0;
         virtual void Connect(Endpoint endpoint, bool blocking) = 0;
 
-        virtual std::vector<std::unique_ptr<IMessage>> Disconnect(bool flush = false) = 0;
+        virtual std::vector<std::unique_ptr<Message::IMessage>> Disconnect(bool flush = false) = 0;
 };

@@ -5,7 +5,7 @@
 #include "Network/Socket.h"
 #include "Network/ClientConnection.h"
 
-#include "Network/Message.h"
+#include "Network/Messages/StringMessage.h"
 
 #include "Client.h"
 
@@ -30,18 +30,17 @@ void ExecuteClientConnection()
 
 	Logging::Log("Client", "Client is connected");
 
-    std::unique_ptr<StringByteFormatter> stringFormatter = std::make_unique<StringByteFormatter>();
-    client.SendMessage(std::make_unique<StringMessage>(move(stringFormatter), "Test Message"));
+    client.SendMessage(std::make_unique<Message::StringMessage>("Test Message"));
 
 	Logging::Log("Client", "Message added to be sent");
 
     while(true)
     {
-        std::unique_ptr<IMessage> serverMessage = move(client.GetMessage());
+        std::unique_ptr<Message::IMessage> serverMessage = move(client.GetMessage());
 
         if (serverMessage.get() != nullptr)
         {
-            std::shared_ptr<std::string> message = dynamic_cast<StringMessage*>(serverMessage.get())->AsType();
+            std::shared_ptr<std::string> message = dynamic_cast<Message::StringMessage*>(serverMessage.get())->AsType();
 
 			Logging::Log("Client", "Message from server: " + *message);
         }

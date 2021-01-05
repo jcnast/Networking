@@ -1,5 +1,7 @@
 #include "ServerConnection.h"
 
+#include "Network/Messages/StringMessage.h"
+
 #include "Logging/Logger.h"
 
 ServerConnection::~ServerConnection()
@@ -7,9 +9,9 @@ ServerConnection::~ServerConnection()
 	Disconnect();
 }
 
-std::unique_ptr<IMessage> ServerConnection::GetMessage()
+std::unique_ptr<Message::IMessage> ServerConnection::GetMessage()
 {
-    std::unique_ptr<IMessage> oldestMessage = nullptr;
+    std::unique_ptr<Message::IMessage> oldestMessage = nullptr;
 
     _receivedMutex.lock();
     {
@@ -25,7 +27,7 @@ std::unique_ptr<IMessage> ServerConnection::GetMessage()
     return oldestMessage;
 }
 
-void ServerConnection::SendMessage(std::unique_ptr<IMessage> message)
+void ServerConnection::SendMessage(std::unique_ptr<Message::IMessage> message)
 {
     _sendMutex.lock();
     {
@@ -66,7 +68,7 @@ void ServerConnection::Connect(Endpoint endpoint, bool blocking)
 	_threadRunning = true;
 }
 
-std::vector<std::unique_ptr<IMessage>> ServerConnection::Disconnect(bool flush)
+std::vector<std::unique_ptr<Message::IMessage>> ServerConnection::Disconnect(bool flush)
 {
     while (flush)
     {
@@ -101,7 +103,7 @@ std::vector<std::unique_ptr<IMessage>> ServerConnection::Disconnect(bool flush)
 
     _socket.Disconnect();
 
-    std::vector<std::unique_ptr<IMessage>> unprocessedMessages;
+    std::vector<std::unique_ptr<Message::IMessage>> unprocessedMessages;
     _receivedMutex.lock();
     {
         unprocessedMessages.push_back(move(_receivedMessages.front()));
@@ -135,7 +137,7 @@ void ServerConnection::Run()
 			clientSocket = Socket();
 		}
 
-		std::shared_ptr<IMessage> nextMessage = nullptr;
+		std::shared_ptr<Message::IMessage> nextMessage = nullptr;
 		_sendMutex.lock();
 		{
 			nextMessage = _messagesToSend.empty() ? nullptr : move(_messagesToSend.front());
@@ -149,7 +151,7 @@ void ServerConnection::Run()
 
 		if (nextMessage.get() != nullptr)
 		{
-			std::shared_ptr<std::string> message = dynamic_cast<StringMessage*>(nextMessage.get())->AsType();
+			std::shared_ptr<std::string> message = dynamic_cast<Message::StringMessage*>(nextMessage.get())->AsType();
 			Logging::Log("ServerConnection", "Sending Message: " + *message);
 
 			for (int i = 0; i < _maxClients; i++)
@@ -160,7 +162,7 @@ void ServerConnection::Run()
 
 		for (int i = 0; i < _maxClients; i++)
 		{
-			std::unique_ptr<IMessage> clientMessage = _clientHandlers[i].GetMessage();
+			std::unique_ptr<Message::IMessage> clientMessage = _clientHandlers[i].GetMessage();
 			if (clientMessage.get() != nullptr)
 			{
 				_receivedMutex.lock();
@@ -170,8 +172,7 @@ void ServerConnection::Run()
 				_receivedMutex.unlock();
 
 				// should be removed at some point
-				std::unique_ptr<StringByteFormatter> stringFormatter = std::make_unique<StringByteFormatter>();
-				SendMessage(std::make_unique<StringMessage>(move(stringFormatter), "Message Received"));
+				SendMessage(std::make_unique<Message::StringMessage>("Message Received"));
 			}
 		}
     }
@@ -222,9 +223,9 @@ void ServerConnection::ClientHandler::SetSocket(Socket socket)
 	_socket = socket;
 }
 
-std::unique_ptr<IMessage> ServerConnection::ClientHandler::GetMessage()
+std::unique_ptr<Message::IMessage> ServerConnection::ClientHandler::GetMessage()
 {
-	std::unique_ptr<IMessage> oldestMessage = nullptr;
+	std::unique_ptr<Message::IMessage> oldestMessage = nullptr;
 
 	_receivedMutex.lock();
 	{
@@ -240,7 +241,7 @@ std::unique_ptr<IMessage> ServerConnection::ClientHandler::GetMessage()
 	return oldestMessage;
 }
 
-void ServerConnection::ClientHandler::SendMessage(std::shared_ptr<IMessage> message)
+void ServerConnection::ClientHandler::SendMessage(std::shared_ptr<Message::IMessage> message)
 {
 	_sendMutex.lock();
 	{
@@ -285,8 +286,7 @@ void ServerConnection::ClientHandler::Run()
 			std::vector<std::byte> minimizedMessage = messageReceived;
 			minimizedMessage.resize(byteReceived);
 
-			std::unique_ptr<StringByteParser> stringParser = std::make_unique<StringByteParser>();
-			std::unique_ptr<StringMessage> message = std::make_unique<StringMessage>(move(stringParser), minimizedMessage);
+			std::unique_ptr<Message::StringMessage> message = std::make_unique<Message::StringMessage>(minimizedMessage);
 
 			Logging::Log("ServerConnection::ClientHandler", "Received Message: " + *(message->AsType()));
 
@@ -297,7 +297,7 @@ void ServerConnection::ClientHandler::Run()
 			_receivedMutex.unlock();
 		}
 
-		std::shared_ptr<IMessage> nextMessage = nullptr;
+		std::shared_ptr<Message::IMessage> nextMessage = nullptr;
 		_sendMutex.lock();
 		{
 			nextMessage = _messagesToSend.empty() ? nullptr : move(_messagesToSend.front());
@@ -311,7 +311,7 @@ void ServerConnection::ClientHandler::Run()
 
 		if (nextMessage.get() != nullptr)
 		{
-			std::shared_ptr<std::string> message = dynamic_cast<StringMessage*>(nextMessage.get())->AsType();
+			std::shared_ptr<std::string> message = dynamic_cast<Message::StringMessage*>(nextMessage.get())->AsType();
 			Logging::Log("ServerConnection::ClientHandler", "Sending Message: " + *message);
 
 			if (_socket.Send(nextMessage->AsBytes()) == -1)

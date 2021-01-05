@@ -1,10 +1,12 @@
 #include "ClientConnection.h"
 
+#include "Network/Messages/StringMessage.h"
+
 #include "Logging/Logger.h"
 
-std::unique_ptr<IMessage> ClientConnection::GetMessage()
+std::unique_ptr<Message::IMessage> ClientConnection::GetMessage()
 {
-    std::unique_ptr<IMessage> oldestMessage = nullptr;
+    std::unique_ptr<Message::IMessage> oldestMessage = nullptr;
 
     _receivedMutex.lock();
     {
@@ -20,7 +22,7 @@ std::unique_ptr<IMessage> ClientConnection::GetMessage()
     return oldestMessage;
 }
 
-void ClientConnection::SendMessage(std::unique_ptr<IMessage> message)
+void ClientConnection::SendMessage(std::unique_ptr<Message::IMessage> message)
 {
     _sendMutex.lock();
     {
@@ -52,7 +54,7 @@ void ClientConnection::Connect(Endpoint endpoint, bool blocking)
     _thread = std::thread(&ClientConnection::Run, this);
 }
 
-std::vector<std::unique_ptr<IMessage>> ClientConnection::Disconnect(bool flush)
+std::vector<std::unique_ptr<Message::IMessage>> ClientConnection::Disconnect(bool flush)
 {
     while (flush)
     {
@@ -78,7 +80,7 @@ std::vector<std::unique_ptr<IMessage>> ClientConnection::Disconnect(bool flush)
 
     _socket.Disconnect();
 
-    std::vector<std::unique_ptr<IMessage>> unprocessedMessages;
+    std::vector<std::unique_ptr<Message::IMessage>> unprocessedMessages;
     _receivedMutex.lock();
     {
         unprocessedMessages.push_back(move(_receivedMessages.front()));
@@ -97,7 +99,7 @@ void ClientConnection::Run()
 
     while (!_threadShouldStop && _socket.Active())
     {
-        std::unique_ptr<IMessage> nextMessage = nullptr;
+        std::unique_ptr<Message::IMessage> nextMessage = nullptr;
         _sendMutex.lock();
         {
             nextMessage = _messagesToSend.empty() ? nullptr : move(_messagesToSend.front());
@@ -111,7 +113,7 @@ void ClientConnection::Run()
 
         if (nextMessage.get() != nullptr)
         {
-			std::shared_ptr<std::string> message = dynamic_cast<StringMessage*>(nextMessage.get())->AsType();
+			std::shared_ptr<std::string> message = dynamic_cast<Message::StringMessage*>(nextMessage.get())->AsType();
 			Logging::Log("ClientConnection", "Sending Message: " + *message);
 
 			if (_socket.Send(nextMessage->AsBytes()) == -1)
@@ -127,8 +129,7 @@ void ClientConnection::Run()
             std::vector<std::byte> minimizedMessage = messageReceived;
             minimizedMessage.resize(byteReceived);
 
-            std::unique_ptr<StringByteParser> stringParser = std::make_unique<StringByteParser>();
-            std::unique_ptr<StringMessage> message = std::make_unique<StringMessage>(move(stringParser), minimizedMessage);
+            std::unique_ptr<Message::StringMessage> message = std::make_unique<Message::StringMessage>(minimizedMessage);
 
 			Logging::Log("ClientConnection", "Received Message: " + *(message->AsType()));
 

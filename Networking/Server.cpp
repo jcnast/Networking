@@ -5,7 +5,7 @@
 #include "Network/Socket.h"
 #include "Network/ServerConnection.h"
 
-#include "Network/Message.h"
+#include "Network/Messages/StringMessage.h"
 
 #include "Server.h"
 
@@ -33,11 +33,11 @@ void ExecuteServerConnection()
 
     while(true)
     {
-        std::unique_ptr<IMessage> clientMessage = move(server.GetMessage());
+        std::unique_ptr<Message::IMessage> clientMessage = move(server.GetMessage());
 
         if (clientMessage != nullptr)
         {
-            std::shared_ptr<std::string> message = dynamic_cast<StringMessage*>(clientMessage.get())->AsType();
+            std::shared_ptr<std::string> message = dynamic_cast<Message::StringMessage*>(clientMessage.get())->AsType();
 
 			Logging::Log("Server", "Message from client: " + *message);
         }

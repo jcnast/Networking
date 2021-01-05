@@ -7,11 +7,12 @@ add_library(Networking_Lib #
 Client.cpp #
 Server.cpp #
 Network/Buffer.cpp #
-Network/ByteFormatter.cpp #
-Network/ByteParser.cpp #
 Network/ClientConnection.cpp #
 Network/Endpoint.cpp #
-Network/Message.cpp #
+Network/Messages/Message.cpp #
+Network/Messages/StringMessage.cpp #
+Network/Messages/MessageHeader.cpp #
+Network/Messages/WrappedMessage.cpp
 Network/ServerConnection.cpp #
 Network/Socket.cpp #
 Network/Linux/LinuxSocket.cpp #

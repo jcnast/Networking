@@ -11,13 +11,13 @@
 class ClientConnection : public IConnection, public IReceiver, public ISender
 {
     public:
-        std::unique_ptr<IMessage> GetMessage() override;
-        void SendMessage(std::unique_ptr<IMessage> message) override;
+        std::unique_ptr<Message::IMessage> GetMessage() override;
+        void SendMessage(std::unique_ptr<Message::IMessage> message) override;
 
         void Connect(Socket socket, Endpoint endpoint, bool blocking) override;
         void Connect(Endpoint endpoint, bool blocking) override;
 
-        std::vector<std::unique_ptr<IMessage>> Disconnect(bool flush = false) override;
+        std::vector<std::unique_ptr<Message::IMessage>> Disconnect(bool flush = false) override;
 
     private:
         Socket _socket;
@@ -26,9 +26,9 @@ class ClientConnection : public IConnection, public IReceiver, public ISender
         std::thread _thread;
         
         std::mutex _sendMutex;
-        std::queue<std::unique_ptr<IMessage>> _messagesToSend;
+        std::queue<std::unique_ptr<Message::IMessage>> _messagesToSend;
         std::mutex _receivedMutex;
-        std::queue<std::unique_ptr<IMessage>> _receivedMessages;
+        std::queue<std::unique_ptr<Message::IMessage>> _receivedMessages;
 
         void Run();
 };
