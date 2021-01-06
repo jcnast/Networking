@@ -4,10 +4,14 @@
 
 namespace Message
 {
+	WrappedMessage::WrappedMessage()
+	{}
+
 	WrappedMessage::WrappedMessage(MessageHeader header, std::unique_ptr<IMessage> message)
 		: _header(header)
-		, _message(move(message))
-	{}
+	{
+		_type = move(message);
+	}
 
 	int WrappedMessage::GetMessageHash()
 	{
@@ -18,16 +22,18 @@ namespace Message
 
 	uint32_t WrappedMessage::GetMessageSize()
 	{
-		return MessageHeader::HeaderClassSize() + _message->GetMessageSize();
+		return MessageHeader::HeaderClassSize() + _type->GetMessageSize();
 	}
 
 	void WrappedMessage::FromBytes(std::vector<std::byte> bytes)
 	{
+		_bytes = bytes;
+
 		// header from first HEADER_SIZE bytes
 		_header.FromBytes(std::vector<std::byte>(bytes.begin(), bytes.begin() + MessageHeader::HeaderClassSize()));
 		// get type and size from header, then create message
 		std::vector<std::byte> messageBytes(bytes.begin() + MessageHeader::HeaderClassSize(), bytes.end());
-		_message = Factory::ConstructMessage(_header, messageBytes);
+		_type = Factory::ConstructMessage(_header, messageBytes);
 	}
 
 	std::vector<std::byte> WrappedMessage::AsBytes()
@@ -40,7 +46,7 @@ namespace Message
 			std::vector<std::byte> headerBytes = _header.AsBytes();
 			copy(_bytes.begin(), _bytes.begin() + MessageHeader::HeaderClassSize(), headerBytes.begin());
 
-			std::vector<std::byte> messageBytes = _message->AsBytes();
+			std::vector<std::byte> messageBytes = _type->AsBytes();
 			copy(_bytes.begin() + MessageHeader::HeaderClassSize(), _bytes.end(), messageBytes.begin());
 		}
 
@@ -49,11 +55,16 @@ namespace Message
 
 	std::shared_ptr<void> WrappedMessage::AsObject()
 	{
-		return static_cast<std::shared_ptr<void>>(_message);
+		return static_cast<std::shared_ptr<void>>(AsType());
 	}
 
 	std::shared_ptr<IMessage> WrappedMessage::AsType()
 	{
-		return _message;
+		if (_type.get() == nullptr)
+		{
+			FromBytes(_bytes);
+		}
+
+		return _type;
 	}
 }

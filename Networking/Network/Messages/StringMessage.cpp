@@ -2,9 +2,12 @@
 
 namespace Message
 {
+	StringMessage::StringMessage()
+	{}
+
 	StringMessage::StringMessage(std::string message)
 	{
-		_message = std::make_unique<std::string>(message);
+		_type = std::make_shared<std::string>(message);
 	}
 
 	StringMessage::StringMessage(std::vector<std::byte> bytes)
@@ -22,10 +25,10 @@ namespace Message
 	void StringMessage::FromBytes(std::vector<std::byte> bytes)
 	{
 		_bytes = bytes;
-		_message = std::make_shared<std::string>(_bytes.size(), '0');
+		_type = std::make_shared<std::string>(_bytes.size(), '0');
 		for (size_t i = 0; i < _bytes.size(); i++)
 		{
-			(*_message)[i] = (char)_bytes[i];
+			(*_type)[i] = (char)_bytes[i];
 		}
 	}
 
@@ -38,8 +41,8 @@ namespace Message
 	{
 		if (_bytes.empty())
 		{
-			char *charStr = _message->data();
-			for (int i = 0; i < _message->length(); i++)
+			char *charStr = _type->data();
+			for (int i = 0; i < _type->length(); i++)
 			{
 				_bytes.push_back(std::byte(charStr[i]));
 			}
@@ -55,15 +58,11 @@ namespace Message
 
 	std::shared_ptr<std::string> StringMessage::AsType()
 	{
-		if (_message == nullptr)
+		if (_type.get() == nullptr || _type->empty())
 		{
-			_message = std::make_shared<std::string>(_bytes.size(), '0');
-			for (size_t i = 0; i < _bytes.size(); i++)
-			{
-				(*_message)[i] = (char)_bytes[i];
-			}
+			FromBytes(_bytes);
 		}
 
-		return std::make_shared<std::string>(*_message);
+		return _type;
 	}
 }

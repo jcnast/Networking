@@ -23,6 +23,9 @@ namespace Message
 		// otherwise, self-referential message types don't work
 		// unless those message types separate their data into a container (probably better actually)
 		virtual std::shared_ptr<void> AsObject() = 0;
+
+	protected:
+		std::vector<std::byte> _bytes;
 	};
 
 	template <typename T>
@@ -30,5 +33,8 @@ namespace Message
 	{
 	public:
 		virtual std::shared_ptr<T> AsType() = 0;
+
+	protected:
+		std::shared_ptr<T> _type;
 	};
 }

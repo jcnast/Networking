@@ -9,6 +9,7 @@ namespace Message
 	class MessageHeader
 	{
 	public:
+		MessageHeader();
 		MessageHeader(int messageTypeHash, uint32_t messageSize);
 		MessageHeader(const MessageHeader& other);
 

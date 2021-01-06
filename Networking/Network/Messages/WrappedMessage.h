@@ -23,9 +23,6 @@ namespace Message
 
 	private:
 		MessageHeader _header;
-		std::shared_ptr<IMessage> _message;
-
-		std::vector<std::byte> _bytes;
 	};
 
 	template <typename T, typename ...Ts>

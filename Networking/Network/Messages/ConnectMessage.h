@@ -1,13 +1,15 @@
+#pragma once
+
 #include "Message.h"
+#include "ConnectionData.h"
 
 namespace Message
 {
-	class StringMessage : public IMessageType<std::string>
+	class ConnectMessage : public IMessageType<ConnectionData>
 	{
 	public:
-		StringMessage();
-		StringMessage(std::string message);
-		StringMessage(std::vector<std::byte> bytes);
+		ConnectMessage();
+		ConnectMessage(const ConnectionData& data);
 
 		int GetMessageHash() override;
 		uint32_t GetMessageSize() override;
@@ -17,6 +19,6 @@ namespace Message
 		std::vector<std::byte> AsBytes() override;
 
 		std::shared_ptr<void> AsObject() override;
-		std::shared_ptr<std::string> AsType() override;
+		std::shared_ptr<ConnectionData> AsType() override;
 	};
 }

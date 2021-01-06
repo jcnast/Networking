@@ -8,6 +8,9 @@
 
 #include "WrappedMessage.h"
 #include "StringMessage.h"
+#include "ConnectMessage.h"
+#include "DisconnectMessage.h"
+#include "HeartbeatMessage.h"
 
 namespace Message::Factory
 {
@@ -20,6 +23,9 @@ namespace Message::Factory
 			{
 				RegisterConstructor<WrappedMessage>();
 				RegisterConstructor<StringMessage>();
+				RegisterConstructor<ConnectMessage>();
+				RegisterConstructor<DisconnectMessage>();
+				RegisterConstructor<HeartbeatMessage>();
 			}
 
 			template <typename T>
@@ -29,6 +35,7 @@ namespace Message::Factory
 				std::unique_ptr<T> temp = std::make_unique<T>();
 				_messageConstructors[temp->GetMessageHash()] = [](std::vector<std::byte> bytes)
 				{
+					// we may want to just require that all IMessage types implement a constructor that takes in bytes to make this simpler
 					std::unique_ptr<T> message = std::make_unique<T>();
 					message->FromBytes(bytes);
 
