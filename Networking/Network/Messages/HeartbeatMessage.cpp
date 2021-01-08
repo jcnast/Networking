@@ -1,14 +1,18 @@
 #include "HeartbeatMessage.h"
 
+#include "Serialization/Serialization.h"
+
 namespace Message
 {
 	HeartbeatMessage::HeartbeatMessage()
-		: _type(std::make_shared<HeartbeatData>())
-	{}
+	{
+		_type = std::make_shared<HeartbeatData>();
+	}
 
 	HeartbeatMessage::HeartbeatMessage(ConnectionData data)
-		: _type(std::make_shared<HeartbeatData>(data))
-	{}
+	{
+		_type = std::make_shared<HeartbeatData>(data);
+	}
 
 	int HeartbeatMessage::GetMessageHash()
 	{

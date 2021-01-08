@@ -44,10 +44,10 @@ namespace Message
 			_bytes.reserve(MessageHeader::HeaderClassSize() + _header.GetSize());
 
 			std::vector<std::byte> headerBytes = _header.AsBytes();
-			copy(_bytes.begin(), _bytes.begin() + MessageHeader::HeaderClassSize(), headerBytes.begin());
+			/copy(_bytes.begin(), _bytes.begin() + MessageHeader::HeaderClassSize(), headerBytes.begin()); // wrong argument order
 
 			std::vector<std::byte> messageBytes = _type->AsBytes();
-			copy(_bytes.begin() + MessageHeader::HeaderClassSize(), _bytes.end(), messageBytes.begin());
+			/copy(_bytes.begin() + MessageHeader::HeaderClassSize(), _bytes.end(), messageBytes.begin()); // wrong argument order
 		}
 
 		return _bytes;

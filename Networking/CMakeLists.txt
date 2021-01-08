@@ -12,7 +12,11 @@ Network/Endpoint.cpp #
 Network/Messages/Message.cpp #
 Network/Messages/StringMessage.cpp #
 Network/Messages/MessageHeader.cpp #
-Network/Messages/WrappedMessage.cpp
+Network/Messages/WrappedMessage.cpp #
+Network/Messages/ConnectMessage.cpp #
+Network/Messages/DisconnectMessage.cpp #
+Network/Messages/HeartbeatMessage.cpp #
+Network/Messages/MetaMessage.cpp #
 Network/ServerConnection.cpp #
 Network/Socket.cpp #
 Network/Linux/LinuxSocket.cpp #
